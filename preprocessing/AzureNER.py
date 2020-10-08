@@ -18,15 +18,15 @@ class AzureNER():
 
         return
 
-    def entity_recognition(self, documents):
-        if (documents == None or len(documents) < 1):
+    def entity_recognition(self, document):
+        if (document == None or len(document) < 1):
             raise Exception("Document is null")
 
-        result = self.client.recognize_entities(documents=documents)
+        result = self.client.recognize_entities(documents=[document])[0]
 
         # print("Named Entities:\n")
         # for entity in result.entities:
         #     print("\tText: \t", entity.text, "\tCategory: \t", entity.category, "\tSubCategory: \t", entity.subcategory,
         #           "\n\tConfidence Score: \t", round(entity.confidence_score, 2), "\tLength: \t", entity.length, "\tOffset: \t", entity.offset, "\n")
 
-        return result
+        return result.entities

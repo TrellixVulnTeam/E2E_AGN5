@@ -19,30 +19,35 @@ def preprocessing():
     if (os.path.isfile(E2E_RESULT_PATH)):
         result = json.load(open(E2E_RESULT_PATH))
 
-    # count = round(len(os.listdir(DATASET_PATH)) * 0.7)
-    count = 5
+    count = round(len(os.listdir(DATASET_PATH)) * 0.7) + 1
+    # count = 6
 
-    for fileName in os.listdir(DATASET_PATH):
-        if (count == 0):
-            break
+    try:
 
-        full_path = os.path.join(DATASET_PATH, fileName)
+        for fileName in os.listdir(DATASET_PATH):
+            if (count == 0):
+                break
 
-        if (fileName not in result):
-            result[fileName] = azureASR.recognize(full_path)
+            full_path = os.path.join(DATASET_PATH, fileName)
 
-        count -= 1
+            if (fileName not in result):
+                transcript = azureASR.recognize(full_path)
+                entities = azureNER.entity_recognition(transcript)
 
-    ner_results = azureNER.entity_recognition(list(result.values()))
+                result[fileName] = transcript
+                for entity in entities:
+                    mark = marks[entity.category]
+                    result[fileName] = result[fileName].replace(
+                        entity.text, mark + entity.text + mark)
 
-    for fileName in result:
-        ner_result = ner_results.pop(0)
-        for entity in ner_result.entities:
-            mark = marks[entity.category]
-            result[fileName] = result[fileName].replace(
-                entity.text, mark + entity.text + mark)
+            count -= 1
+
+    except Exception as ex:
+        print(ex)
 
     json.dump(result, open(E2E_RESULT_PATH, 'w'))
+
+    return
 
 
 if __name__ == "__main__":

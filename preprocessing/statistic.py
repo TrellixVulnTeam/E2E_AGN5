@@ -2,7 +2,7 @@ import json
 
 DATASET_PATH = 'dataset'
 MARKS_PATH = './preprocessing/marks.json'
-E2E_RESULT_PATH = './example_dataset.json'
+E2E_RESULT_PATH = './E2E_Dataset.json'
 
 
 def reverseDict(dict):

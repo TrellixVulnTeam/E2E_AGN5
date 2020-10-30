@@ -40,7 +40,7 @@ def preprocessing():
                     result[fileName] = result[fileName].replace(
                         entity.text, mark + entity.text + mark)
 
-            count -= 1
+            # count -= 1
 
     except Exception as ex:
         print(ex)

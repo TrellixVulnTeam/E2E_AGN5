@@ -98,6 +98,8 @@ def evaluate_model(estimator, speech_labels, entries, input_fn_eval):
   for i in range(num_of_examples):
     # Decode string.
     decoded_str = greedy_decoder.decode(probs[i])
+    # print("Decoded:", decoded_str)
+    # print('Target:', targets[i], '\n')
     # Compute CER.
     total_cer += greedy_decoder.cer(decoded_str, targets[i]) / float(
         len(targets[i]))
@@ -170,6 +172,11 @@ def model_fn(features, labels, mode, params):
   update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
   # Create the train_op that groups both minimize_ops and update_ops
   train_op = tf.group(minimize_op, update_ops)
+
+  print('Saving Keras Model')
+  kerasModel = tf.keras.Model(inputs=features, outputs=logits)
+  # kerasModel.compile(optimizer=optimizer, loss=loss)
+  kerasModel.save('myModel.h5')
 
   return tf.estimator.EstimatorSpec(
       mode=mode,
@@ -290,14 +297,14 @@ def run_deep_speech(_):
         eval_speech_dataset.entries, input_fn_eval)
 
     # Log the WER and CER results.
-    benchmark_logger.log_evaluation_result(eval_results)
+    # benchmark_logger.log_evaluation_result(eval_results)
     logging.info(
         "Iteration {}: WER = {:.2f}, CER = {:.2f}".format(
             cycle_index + 1, eval_results[_WER_KEY], eval_results[_CER_KEY]))
 
     # If some evaluation threshold is met
     if model_helpers.past_stop_threshold(
-        flags_obj.wer_threshold, eval_results[_WER_KEY]):
+        eval_results[_WER_KEY], flags_obj.wer_threshold):
       break
 
 
@@ -324,10 +331,10 @@ def define_deep_speech_flags():
   flags.adopt_module_key_flags(flags_core)
 
   flags_core.set_defaults(
-      model_dir="/tmp/deep_speech_model/",
-      export_dir="/tmp/deep_speech_saved_model/",
+      model_dir="/mnt/c/Users/xiang/Development/trained_model/",
+      export_dir="/mnt/c/Users/xiang/Development/deep_speech_saved_model/",
       train_epochs=10,
-      batch_size=128,
+      batch_size=32,
       hooks="")
 
   # Deep speech flags

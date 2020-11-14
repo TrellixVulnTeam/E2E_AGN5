@@ -54,7 +54,7 @@ def batch_norm(inputs, training):
     tensor output from batch norm layer.
   """
   return tf.keras.layers.BatchNormalization(
-      momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON)(inputs, training=training)
+      momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON, trainable=False)(inputs, training=training)
 
 
 def _conv_bn_layer(inputs, padding, filters, kernel_size, strides, layer_id,
@@ -83,7 +83,7 @@ def _conv_bn_layer(inputs, padding, filters, kernel_size, strides, layer_id,
   inputs = tf.keras.layers.Conv2D(
       filters=filters, kernel_size=kernel_size, strides=strides,
       padding="valid", use_bias=False, activation=tf.nn.relu6,
-      name="cnn_{}".format(layer_id))(inputs)
+      name="cnn_{}".format(layer_id), trainable=False)(inputs)
   return batch_norm(inputs, training)
 
 
@@ -111,10 +111,10 @@ def _rnn_layer(inputs, rnn_cell, rnn_hidden_size, layer_id, is_batch_norm,
   if is_bidirectional:
     rnn_outputs = tf.keras.layers.Bidirectional(
         tf.keras.layers.RNN(rnn_cell(rnn_hidden_size),
-                            return_sequences=True))(inputs)
+                            return_sequences=True, trainable=False))(inputs)
   else:
     rnn_outputs = tf.keras.layers.RNN(
-        rnn_cell(rnn_hidden_size), return_sequences=True)(inputs)
+        rnn_cell(rnn_hidden_size), return_sequences=True, trainable=False)(inputs)
 
   return rnn_outputs
 
@@ -141,6 +141,7 @@ class DeepSpeech2(object):
     self.use_bias = use_bias
 
   def __call__(self, inputs, training):
+    original_inputs = tf.keras.Input(tensor=inputs)
     # Two cnn layers.
     inputs = _conv_bn_layer(
         inputs, padding=(20, 5), filters=_CONV_FILTERS, kernel_size=(41, 11),
@@ -171,7 +172,12 @@ class DeepSpeech2(object):
     # FC layer with batch norm.
     inputs = batch_norm(inputs, training)
     logits = tf.keras.layers.Dense(
-        self.num_classes, use_bias=self.use_bias, activation="softmax")(inputs)
+        29, use_bias=self.use_bias, activation="softmax")(inputs)
 
+    # logits = tf.keras.layers.Dense(
+    #     55, use_bias=self.use_bias, activation="softmax", name='LastLayer')(inputs)
+
+    model = tf.keras.Model(inputs=original_inputs, outputs=logits)
+    print(model.summary(line_length=180))
     return logits
 

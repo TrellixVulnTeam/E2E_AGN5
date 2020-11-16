@@ -142,7 +142,7 @@ class DeepSpeech2(object):
 
   def __call__(self, inputs, training):
     original_inputs = tf.keras.Input(tensor=inputs)
-    # Two cnn layers.
+    # Three cnn layers.
     inputs = _conv_bn_layer(
         inputs, padding=(20, 5), filters=_CONV_FILTERS, kernel_size=(41, 11),
         strides=(2, 2), layer_id=1, training=training)
@@ -150,6 +150,10 @@ class DeepSpeech2(object):
     inputs = _conv_bn_layer(
         inputs, padding=(10, 5), filters=_CONV_FILTERS, kernel_size=(21, 11),
         strides=(2, 1), layer_id=2, training=training)
+
+    inputs = _conv_bn_layer(
+        inputs, padding=(10, 5), filters=_CONV_FILTERS, kernel_size=(21, 11),
+        strides=(2, 1), layer_id=3, training=training)
 
     # output of conv_layer2 with the shape of
     # [batch_size (N), times (T), features (F), channels (C)].
@@ -171,11 +175,11 @@ class DeepSpeech2(object):
 
     # FC layer with batch norm.
     inputs = batch_norm(inputs, training)
-    logits = tf.keras.layers.Dense(
-        29, use_bias=self.use_bias, activation="softmax")(inputs)
-
     # logits = tf.keras.layers.Dense(
-    #     55, use_bias=self.use_bias, activation="softmax", name='LastLayer')(inputs)
+    #     29, use_bias=self.use_bias, activation="softmax")(inputs)
+
+    logits = tf.keras.layers.Dense(
+        self.num_classes, use_bias=self.use_bias, activation="softmax", name='LastLayer')(inputs)
 
     model = tf.keras.Model(inputs=original_inputs, outputs=logits)
     print(model.summary(line_length=180))
